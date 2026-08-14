@@ -20,7 +20,8 @@
   --status-neutral:  #898781;  /* saved */
 
   --radius: 12px;
-  --font: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font: 'Inter', system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: 'Instrument Serif', Georgia, serif;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -95,7 +96,9 @@ body {
 }
 .app-header__title h1 {
   margin: 0 0 4px;
-  font-size: 1.6rem;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 2rem;
   letter-spacing: -0.01em;
 }
 .app-header__subtitle {
@@ -103,6 +106,25 @@ body {
   color: var(--text-secondary);
   font-size: 0.95rem;
 }
+.app-header__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.add-btn {
+  background: var(--series-1);
+  border: 1px solid var(--series-1);
+  border-radius: 999px;
+  padding: 8px 16px;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #ffffff;
+  cursor: pointer;
+}
+.add-btn:hover { opacity: 0.9; }
+
 .theme-toggle {
   display: flex;
   align-items: center;
@@ -118,6 +140,69 @@ body {
   flex-shrink: 0;
 }
 .theme-toggle:hover { color: var(--text-primary); }
+
+/* Add application dialog ---------------------------------------------- */
+.add-dialog {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  width: min(520px, 92vw);
+  background: var(--surface-1);
+  color: var(--text-primary);
+}
+.add-dialog::backdrop { background: rgba(0, 0, 0, 0.5); }
+.add-dialog h2 {
+  margin: 0 0 16px;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.5rem;
+}
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 16px;
+}
+.form-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+.form-grid input, .form-grid select, .form-grid textarea {
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-page);
+  color: var(--text-primary);
+}
+.form-grid__full { grid-column: 1 / -1; }
+.form-grid__checkbox { flex-direction: row; align-items: center; gap: 8px; }
+.form-grid__checkbox input { width: auto; }
+@media (max-width: 560px) {
+  .form-grid { grid-template-columns: 1fr; }
+}
+
+.add-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+.btn {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 8px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+}
+.btn--secondary { background: transparent; color: var(--text-secondary); }
+.btn--secondary:hover { color: var(--text-primary); }
+.btn--primary { background: var(--series-1); border-color: var(--series-1); color: #ffffff; }
+.btn--primary:hover { opacity: 0.9; }
 
 /* Stat tiles ---------------------------------------------------------- */
 .stats {
@@ -241,6 +326,14 @@ body {
 .card__header { margin-bottom: 6px; }
 .card__company { margin: 0; font-size: 0.95rem; }
 .card__role { display: block; font-size: 0.82rem; color: var(--text-secondary); }
+.card__cover-letter {
+  display: inline-block;
+  margin-top: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+.card__cover-letter.is-written { color: var(--status-good); }
 .card__meta {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -322,6 +415,8 @@ tbody a:hover { text-decoration: underline; }
   white-space: nowrap;
 }
 .badge__dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.badge--good { color: var(--status-good); border-color: var(--status-good); }
+.badge--muted { color: var(--text-muted); }
 
 .is-hidden { display: none !important; }
 

@@ -27,9 +27,13 @@ Each entry in `applications.json` looks like this:
   "nextStepDate": "2026-08-22",
   "contact": "Jane Diallo — jane@acme.example",
   "link": "https://acme.example/careers/123",
-  "notes": "Referred by a former classmate."
+  "notes": "Referred by a former classmate.",
+  "coverLetter": false
 }
 ```
+
+`coverLetter` is `true`/`false` and drives the cover-letter indicator shown on
+each card and table row.
 
 `status` must be one of: `saved`, `applied`, `interview`, `offer`, `rejected`.
 Any field can be left as an empty string `""` if you don't have that info yet.
@@ -114,9 +118,11 @@ everything you need.
 
 ## Notes
 
-- The board/table only *display* data — there's no in-browser "add" form by
-  design, so your data always stays as one clean, versioned JSON file you can
-  read a diff of in `git log`.
+- The **+ Add application** button lets you add an entry from the browser.
+  Added entries are saved to that browser's `localStorage`, not to
+  `data/applications.json` — they show up for you on that device/browser
+  only. To make an addition permanent (visible to everyone, and versioned in
+  git), copy its fields into `data/applications.json` by hand and commit.
 - Dark mode follows your OS setting automatically, or use the toggle in the
   top-right corner (remembered per-browser).
 - Everything is plain HTML/CSS/JS — no dependencies to install, no build

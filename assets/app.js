@@ -111,6 +111,10 @@
     $(".card__company", node).textContent = a.company || "Untitled";
     $(".card__role", node).textContent = a.role || "";
 
+    const coverEl = $(".card__cover-letter", node);
+    coverEl.textContent = a.coverLetter ? "✓ Cover letter written" : "✕ Cover letter not written";
+    coverEl.classList.toggle("is-written", !!a.coverLetter);
+
     const meta = $(".card__meta", node);
     const rows = [];
     if (a.dateApplied) rows.push(["Applied", fmtDate(a.dateApplied)]);
@@ -168,6 +172,9 @@
         <td data-col="dateApplied">${fmtDate(a.dateApplied)}</td>
         <td data-col="deadline">${fmtDate(a.deadline)}</td>
         <td data-col="nextStepDate">${a.nextStep ? escapeHtml(a.nextStep) + (a.nextStepDate ? " · " + fmtDate(a.nextStepDate) : "") : "—"}</td>
+        <td data-col="coverLetter">
+          <span class="badge ${a.coverLetter ? "badge--good" : "badge--muted"}">${a.coverLetter ? "✓ Written" : "✕ Not written"}</span>
+        </td>
         <td data-col="link">${a.link ? `<a href="${escapeAttr(a.link)}" target="_blank" rel="noopener">Open →</a>` : "—"}</td>
       `;
       body.appendChild(tr);
@@ -243,18 +250,83 @@
     });
   }
 
+  // ---- Locally-added applications ---------------------------------------
+  // Applications added via the "+ Add application" button live only in this
+  // browser (localStorage) — data/applications.json stays the versioned
+  // source of truth unless someone copies these entries into it by hand.
+  const LOCAL_APPS_KEY = "the-click-bait-local-applications";
+
+  function loadLocalApplications() {
+    try {
+      const raw = localStorage.getItem(LOCAL_APPS_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveLocalApplications(apps) {
+    localStorage.setItem(LOCAL_APPS_KEY, JSON.stringify(apps));
+  }
+
+  function setupAddForm() {
+    const dialog = $("#add-dialog");
+    const form = $("#add-form");
+
+    $("#add-application").addEventListener("click", () => {
+      form.reset();
+      dialog.showModal();
+    });
+
+    $("#add-cancel").addEventListener("click", () => dialog.close());
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const fd = new FormData(form);
+      const company = (fd.get("company") || "").toString().trim();
+      if (!company) return;
+
+      const app = {
+        id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        company,
+        role: (fd.get("role") || "").toString().trim(),
+        status: (fd.get("status") || "saved").toString(),
+        dateApplied: (fd.get("dateApplied") || "").toString(),
+        deadline: (fd.get("deadline") || "").toString(),
+        nextStep: (fd.get("nextStep") || "").toString().trim(),
+        nextStepDate: (fd.get("nextStepDate") || "").toString(),
+        contact: (fd.get("contact") || "").toString().trim(),
+        link: (fd.get("link") || "").toString().trim(),
+        notes: (fd.get("notes") || "").toString().trim(),
+        coverLetter: fd.get("coverLetter") === "on",
+      };
+
+      state.applications.push(app);
+      const localApps = loadLocalApplications();
+      localApps.push(app);
+      saveLocalApplications(localApps);
+
+      dialog.close();
+      renderAll();
+    });
+  }
+
   // ---- Boot ------------------------------------------------------------
   async function init() {
     setupControls();
+    setupAddForm();
+
+    let remote = [];
     try {
       const res = await fetch("data/applications.json", { cache: "no-store" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      state.applications = await res.json();
+      remote = await res.json();
     } catch (err) {
       console.error("Could not load data/applications.json —", err);
       const el = $("#stats");
       el.innerHTML = `<p class="empty-state">Could not load data/applications.json. If you opened this file directly (file://), run a local server instead — see README.md.</p>`;
     }
+    state.applications = [...remote, ...loadLocalApplications()];
     renderAll();
   }
 
