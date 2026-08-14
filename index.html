@@ -65,7 +65,7 @@
               <th data-sort="dateApplied">Date applied</th>
               <th data-sort="deadline">Deadline</th>
               <th data-sort="nextStepDate">Next step</th>
-              <th data-sort="coverLetter">Cover letter</th>
+              <th data-sort="coverLetterLink">Cover letter</th>
               <th>Link</th>
             </tr>
           </thead>
@@ -86,7 +86,7 @@
         <h3 class="card__company"></h3>
         <span class="card__role"></span>
       </header>
-      <span class="card__cover-letter"></span>
+      <a class="card__cover-letter" target="_blank" rel="noopener"></a>
       <dl class="card__meta"></dl>
       <p class="card__notes"></p>
       <a class="card__link" target="_blank" rel="noopener">View posting →</a>
@@ -95,7 +95,14 @@
 
   <dialog id="add-dialog" class="add-dialog">
     <form id="add-form">
-      <h2>Add application</h2>
+      <h2 id="add-dialog-title">Add application</h2>
+
+      <div class="autofill-row">
+        <input type="url" id="autofill-url" placeholder="Paste a job posting link (Indeed, Welcome to the Jungle, JobTeaser…)" autocomplete="off" />
+        <button type="button" id="autofill-btn" class="btn btn--secondary">Autofill</button>
+      </div>
+      <p id="autofill-status" class="autofill-status"></p>
+
       <div class="form-grid">
         <label>Company
           <input name="company" required autocomplete="off" />
@@ -133,14 +140,13 @@
         <label class="form-grid__full">Notes
           <textarea name="notes" rows="2"></textarea>
         </label>
-        <label class="form-grid__full form-grid__checkbox">
-          <input type="checkbox" name="coverLetter" />
-          Cover letter written
+        <label class="form-grid__full">Cover letter link (optional)
+          <input type="url" name="coverLetterLink" placeholder="Link to your cover letter doc" autocomplete="off" />
         </label>
       </div>
       <div class="add-dialog__actions">
         <button type="button" id="add-cancel" class="btn btn--secondary">Cancel</button>
-        <button type="submit" class="btn btn--primary">Add application</button>
+        <button type="submit" id="add-submit" class="btn btn--primary">Add application</button>
       </div>
     </form>
   </dialog>

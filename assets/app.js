@@ -17,6 +17,7 @@
     search: "",
     sortKey: "company",
     sortDir: 1,
+    editingId: null,
   };
 
   const $ = (sel, root = document) => root.querySelector(sel);
@@ -112,8 +113,15 @@
     $(".card__role", node).textContent = a.role || "";
 
     const coverEl = $(".card__cover-letter", node);
-    coverEl.textContent = a.coverLetter ? "✓ Cover letter written" : "✕ Cover letter not written";
-    coverEl.classList.toggle("is-written", !!a.coverLetter);
+    if (a.coverLetterLink) {
+      coverEl.textContent = "✓ Cover letter";
+      coverEl.setAttribute("href", a.coverLetterLink);
+      coverEl.classList.add("is-written");
+    } else {
+      coverEl.textContent = "✕ No cover letter";
+      coverEl.removeAttribute("href");
+      coverEl.classList.remove("is-written");
+    }
 
     const meta = $(".card__meta", node);
     const rows = [];
@@ -136,7 +144,9 @@
     const link = $(".card__link", node);
     if (a.link) link.setAttribute("href", a.link); else link.removeAttribute("href");
 
-    return node.firstElementChild;
+    const card = node.firstElementChild;
+    attachEditOnClick(card, a);
+    return card;
   }
 
   // ---- Table -------------------------------------------------------------
@@ -172,11 +182,14 @@
         <td data-col="dateApplied">${fmtDate(a.dateApplied)}</td>
         <td data-col="deadline">${fmtDate(a.deadline)}</td>
         <td data-col="nextStepDate">${a.nextStep ? escapeHtml(a.nextStep) + (a.nextStepDate ? " · " + fmtDate(a.nextStepDate) : "") : "—"}</td>
-        <td data-col="coverLetter">
-          <span class="badge ${a.coverLetter ? "badge--good" : "badge--muted"}">${a.coverLetter ? "✓ Written" : "✕ Not written"}</span>
+        <td data-col="coverLetterLink">
+          ${a.coverLetterLink
+            ? `<a class="badge badge--good" href="${escapeAttr(a.coverLetterLink)}" target="_blank" rel="noopener">✓ Cover letter</a>`
+            : `<span class="badge badge--muted">✕ No cover letter</span>`}
         </td>
         <td data-col="link">${a.link ? `<a href="${escapeAttr(a.link)}" target="_blank" rel="noopener">Open →</a>` : "—"}</td>
       `;
+      attachEditOnClick(tr, a);
       body.appendChild(tr);
     });
   }
@@ -250,11 +263,16 @@
     });
   }
 
-  // ---- Locally-added applications ---------------------------------------
-  // Applications added via the "+ Add application" button live only in this
-  // browser (localStorage) — data/applications.json stays the versioned
-  // source of truth unless someone copies these entries into it by hand.
+  // ---- Locally-added / locally-edited applications -----------------------
+  // Applications added via "+ Add application" live only in this browser
+  // (localStorage) — data/applications.json stays the versioned source of
+  // truth unless someone copies an entry into it by hand. Edits made to an
+  // application that came from applications.json are stored the same way,
+  // keyed by id, and overlaid on top of the JSON data at load time.
   const LOCAL_APPS_KEY = "the-click-bait-local-applications";
+  const OVERRIDES_KEY = "the-click-bait-overrides";
+
+  const isLocalId = (id) => typeof id === "string" && id.startsWith("local-");
 
   function loadLocalApplications() {
     try {
@@ -264,21 +282,128 @@
       return [];
     }
   }
-
   function saveLocalApplications(apps) {
     localStorage.setItem(LOCAL_APPS_KEY, JSON.stringify(apps));
+  }
+
+  function loadOverrides() {
+    try {
+      const raw = localStorage.getItem(OVERRIDES_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch {
+      return {};
+    }
+  }
+  function saveOverrides(overrides) {
+    localStorage.setItem(OVERRIDES_KEY, JSON.stringify(overrides));
+  }
+
+  function persistNew(app) {
+    const localApps = loadLocalApplications();
+    localApps.push(app);
+    saveLocalApplications(localApps);
+  }
+  function persistEdit(app) {
+    if (isLocalId(app.id)) {
+      const localApps = loadLocalApplications().map((a) => (a.id === app.id ? app : a));
+      saveLocalApplications(localApps);
+    } else {
+      const overrides = loadOverrides();
+      overrides[app.id] = app;
+      saveOverrides(overrides);
+    }
+  }
+
+  // Clicking a card or table row (but not a link inside it) opens it for editing.
+  function attachEditOnClick(el, app) {
+    el.addEventListener("click", (e) => {
+      const link = e.target.closest("a");
+      if (link && link.hasAttribute("href")) return;
+      openDialog(app);
+    });
+  }
+
+  // ---- Add / edit dialog --------------------------------------------------
+  function openDialog(app) {
+    const dialog = $("#add-dialog");
+    const form = $("#add-form");
+    form.reset();
+    $("#autofill-status").textContent = "";
+    state.editingId = app ? app.id : null;
+    $("#add-dialog-title").textContent = app ? "Edit application" : "Add application";
+    $("#add-submit").textContent = app ? "Save changes" : "Add application";
+
+    if (app) {
+      form.company.value = app.company || "";
+      form.role.value = app.role || "";
+      form.status.value = app.status || "saved";
+      form.dateApplied.value = app.dateApplied || "";
+      form.deadline.value = app.deadline || "";
+      form.nextStep.value = app.nextStep || "";
+      form.nextStepDate.value = app.nextStepDate || "";
+      form.contact.value = app.contact || "";
+      form.link.value = app.link || "";
+      form.notes.value = app.notes || "";
+      form.coverLetterLink.value = app.coverLetterLink || "";
+    }
+
+    dialog.showModal();
+  }
+
+  // Best-effort: fetch the job posting through a public reader proxy and
+  // guess role/company from its page title. Always falls back to letting the
+  // person fill the form in by hand — this will not work for every site.
+  function guessFromTitle(title) {
+    const t = title.split(" | ")[0].trim();
+    const seps = [" chez ", " at ", " - ", " – ", " — "];
+    for (const sep of seps) {
+      const idx = t.indexOf(sep);
+      if (idx > -1) {
+        return { role: t.slice(0, idx).trim(), company: t.slice(idx + sep.length).trim() };
+      }
+    }
+    return { role: t, company: "" };
+  }
+
+  function setupAutofill() {
+    const urlInput = $("#autofill-url");
+    const btn = $("#autofill-btn");
+    const status = $("#autofill-status");
+    const form = $("#add-form");
+
+    btn.addEventListener("click", async () => {
+      const url = urlInput.value.trim();
+      if (!url) return;
+      btn.disabled = true;
+      status.textContent = "Fetching…";
+      try {
+        const res = await fetch(`https://r.jina.ai/${url}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const text = await res.text();
+        const match = text.match(/^Title:\s*(.+)$/m);
+        if (!match) throw new Error("No title found");
+        const { role, company } = guessFromTitle(match[1].trim());
+        if (role) form.role.value = role;
+        if (company) form.company.value = company;
+        form.link.value = url;
+        status.textContent = "Filled from the page title — double-check company/role before saving.";
+      } catch (err) {
+        console.error("Autofill failed —", err);
+        form.link.value = url;
+        status.textContent = "Couldn't auto-fill from that link — fill in the rest manually.";
+      } finally {
+        btn.disabled = false;
+      }
+    });
   }
 
   function setupAddForm() {
     const dialog = $("#add-dialog");
     const form = $("#add-form");
 
-    $("#add-application").addEventListener("click", () => {
-      form.reset();
-      dialog.showModal();
-    });
-
+    $("#add-application").addEventListener("click", () => openDialog(null));
     $("#add-cancel").addEventListener("click", () => dialog.close());
+    setupAutofill();
 
     form.addEventListener("submit", (e) => {
       e.preventDefault();
@@ -287,7 +412,7 @@
       if (!company) return;
 
       const app = {
-        id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        id: state.editingId || `local-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         company,
         role: (fd.get("role") || "").toString().trim(),
         status: (fd.get("status") || "saved").toString(),
@@ -298,13 +423,16 @@
         contact: (fd.get("contact") || "").toString().trim(),
         link: (fd.get("link") || "").toString().trim(),
         notes: (fd.get("notes") || "").toString().trim(),
-        coverLetter: fd.get("coverLetter") === "on",
+        coverLetterLink: (fd.get("coverLetterLink") || "").toString().trim(),
       };
 
-      state.applications.push(app);
-      const localApps = loadLocalApplications();
-      localApps.push(app);
-      saveLocalApplications(localApps);
+      if (state.editingId) {
+        state.applications = state.applications.map((a) => (a.id === app.id ? app : a));
+        persistEdit(app);
+      } else {
+        state.applications.push(app);
+        persistNew(app);
+      }
 
       dialog.close();
       renderAll();
@@ -326,7 +454,9 @@
       const el = $("#stats");
       el.innerHTML = `<p class="empty-state">Could not load data/applications.json. If you opened this file directly (file://), run a local server instead — see README.md.</p>`;
     }
-    state.applications = [...remote, ...loadLocalApplications()];
+    const overrides = loadOverrides();
+    const base = [...remote, ...loadLocalApplications()];
+    state.applications = base.map((a) => overrides[a.id] || a);
     renderAll();
   }
 

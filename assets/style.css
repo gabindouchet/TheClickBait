@@ -179,10 +179,26 @@ body {
   color: var(--text-primary);
 }
 .form-grid__full { grid-column: 1 / -1; }
-.form-grid__checkbox { flex-direction: row; align-items: center; gap: 8px; }
-.form-grid__checkbox input { width: auto; }
 @media (max-width: 560px) {
   .form-grid { grid-template-columns: 1fr; }
+}
+
+.autofill-row { display: flex; gap: 8px; margin-bottom: 4px; }
+.autofill-row input {
+  flex: 1;
+  font: inherit;
+  font-size: 0.9rem;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface-page);
+  color: var(--text-primary);
+}
+.autofill-status {
+  margin: 0 0 16px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  min-height: 1em;
 }
 
 .add-dialog__actions {
@@ -322,7 +338,9 @@ body {
   border: 1px solid var(--border);
   border-radius: 10px;
   padding: 10px 12px;
+  cursor: pointer;
 }
+.card:hover { border-color: var(--baseline); }
 .card__header { margin-bottom: 6px; }
 .card__company { margin: 0; font-size: 0.95rem; }
 .card__role { display: block; font-size: 0.82rem; color: var(--text-secondary); }
@@ -332,8 +350,10 @@ body {
   font-size: 0.72rem;
   font-weight: 600;
   color: var(--text-muted);
+  text-decoration: none;
 }
 .card__cover-letter.is-written { color: var(--status-good); }
+.card__cover-letter.is-written:hover { text-decoration: underline; }
 .card__meta {
   display: grid;
   grid-template-columns: auto 1fr;
@@ -383,6 +403,8 @@ thead th {
   white-space: nowrap;
 }
 thead th:hover { color: var(--text-primary); }
+tbody tr { cursor: pointer; }
+tbody tr:hover td { background: var(--surface-page); }
 tbody td {
   padding: 10px 14px;
   border-bottom: 1px solid var(--gridline);

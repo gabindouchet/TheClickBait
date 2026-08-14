@@ -28,12 +28,13 @@ Each entry in `applications.json` looks like this:
   "contact": "Jane Diallo — jane@acme.example",
   "link": "https://acme.example/careers/123",
   "notes": "Referred by a former classmate.",
-  "coverLetter": false
+  "coverLetterLink": ""
 }
 ```
 
-`coverLetter` is `true`/`false` and drives the cover-letter indicator shown on
-each card and table row.
+`coverLetterLink` holds a link to your cover letter for that application (a
+Google Doc link, for example). Leave it `""` if you haven't written one yet —
+the cover-letter indicator on each card/table row reflects whether it's set.
 
 `status` must be one of: `saved`, `applied`, `interview`, `offer`, `rejected`.
 Any field can be left as an empty string `""` if you don't have that info yet.
@@ -118,11 +119,19 @@ everything you need.
 
 ## Notes
 
-- The **+ Add application** button lets you add an entry from the browser.
-  Added entries are saved to that browser's `localStorage`, not to
-  `data/applications.json` — they show up for you on that device/browser
-  only. To make an addition permanent (visible to everyone, and versioned in
-  git), copy its fields into `data/applications.json` by hand and commit.
+- The **+ Add application** button lets you add an entry from the browser,
+  optionally by pasting a job posting link (Indeed, Welcome to the Jungle,
+  JobTeaser, …) and clicking **Autofill** — it fetches the page through a
+  public reader service and guesses the role/company from its title. This is
+  best-effort and won't work for every site; always double-check the filled
+  fields, or just fill the form in by hand.
+- **Click any card or table row** to reopen that same form pre-filled, so you
+  can update its status, dates, or cover letter link.
+- Additions and edits are saved to that browser's `localStorage`, not to
+  `data/applications.json` — they only show up for you, on that
+  device/browser. To make a change permanent (visible to everyone, and
+  versioned in git), copy its fields into `data/applications.json` by hand
+  and commit.
 - Dark mode follows your OS setting automatically, or use the toggle in the
   top-right corner (remembered per-browser).
 - Everything is plain HTML/CSS/JS — no dependencies to install, no build

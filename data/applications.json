@@ -11,7 +11,7 @@
     "contact": "Jane Diallo — jane.diallo@acmerobotics.example",
     "link": "https://acmerobotics.example/careers/swe-apprentice",
     "notes": "Referred by former classmate Léo. Panel interview, prepare a short project walkthrough.",
-    "coverLetter": false
+    "coverLetterLink": ""
   },
   {
     "id": "northwind-data-2026",
@@ -25,6 +25,6 @@
     "contact": "",
     "link": "https://northwinddata.example/apprenticeships",
     "notes": "Found via school job board. Needs a tailored cover letter.",
-    "coverLetter": false
+    "coverLetterLink": ""
   }
 ]
