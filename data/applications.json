@@ -1,0 +1,28 @@
+[
+  {
+    "id": "acme-swe-2026",
+    "company": "Acme Robotics",
+    "role": "Software Engineering Apprentice",
+    "status": "interview",
+    "dateApplied": "2026-07-15",
+    "deadline": "2026-07-30",
+    "nextStep": "Technical interview (2nd round)",
+    "nextStepDate": "2026-08-22",
+    "contact": "Jane Diallo — jane.diallo@acmerobotics.example",
+    "link": "https://acmerobotics.example/careers/swe-apprentice",
+    "notes": "Referred by former classmate Léo. Panel interview, prepare a short project walkthrough."
+  },
+  {
+    "id": "northwind-data-2026",
+    "company": "Northwind Data Co.",
+    "role": "Data Analytics Apprentice",
+    "status": "saved",
+    "dateApplied": "",
+    "deadline": "2026-09-05",
+    "nextStep": "Submit application",
+    "nextStepDate": "2026-08-25",
+    "contact": "",
+    "link": "https://northwinddata.example/apprenticeships",
+    "notes": "Found via school job board. Needs a tailored cover letter."
+  }
+]
