@@ -343,6 +343,124 @@
     }
   }
 
+  // ---- GitHub auto-sync ----------------------------------------------------
+  // With a token connected, every add/edit/delete is committed straight to
+  // data/applications.json on GitHub via the Contents API — no export, no
+  // manual git push. The token (scoped to just this repo) lives only in this
+  // browser's localStorage; it's never hardcoded or sent anywhere but
+  // api.github.com. On a successful push, the corresponding local-only
+  // overlay entry is cleared since the JSON file itself now reflects it.
+  const GITHUB_TOKEN_KEY = "the-click-bait-github-token";
+  const REPO_OWNER = "gabindouchet";
+  const REPO_NAME = "TheClickBait";
+  const REPO_BRANCH = "main";
+  const REPO_PATH = "data/applications.json";
+
+  const getGithubToken = () => localStorage.getItem(GITHUB_TOKEN_KEY) || "";
+  const setGithubToken = (t) => {
+    if (t) localStorage.setItem(GITHUB_TOKEN_KEY, t);
+    else localStorage.removeItem(GITHUB_TOKEN_KEY);
+  };
+
+  function flashSyncStatus(text) {
+    const el = $("#sync-status");
+    el.textContent = text;
+    clearTimeout(flashSyncStatus._t);
+    flashSyncStatus._t = setTimeout(() => { el.textContent = ""; }, 5000);
+  }
+
+  function base64EncodeUtf8(str) {
+    return btoa(unescape(encodeURIComponent(str)));
+  }
+
+  async function pushApplicationsToGithub() {
+    const token = getGithubToken();
+    if (!token) return { skipped: true };
+
+    const apiUrl = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${REPO_PATH}`;
+    const headers = { Authorization: `Bearer ${token}`, Accept: "application/vnd.github+json" };
+    try {
+      const getRes = await fetch(`${apiUrl}?ref=${REPO_BRANCH}`, { headers });
+      if (!getRes.ok) throw new Error(`Could not read the current file (HTTP ${getRes.status})`);
+      const { sha } = await getRes.json();
+
+      const json = JSON.stringify(state.applications, null, 2) + "\n";
+      const putRes = await fetch(apiUrl, {
+        method: "PUT",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: "Update applications.json via The Click Bait",
+          content: base64EncodeUtf8(json),
+          sha,
+          branch: REPO_BRANCH,
+        }),
+      });
+      if (!putRes.ok) {
+        const body = await putRes.json().catch(() => ({}));
+        throw new Error(body.message || `HTTP ${putRes.status}`);
+      }
+      return { ok: true };
+    } catch (err) {
+      console.error("GitHub sync failed —", err);
+      return { ok: false, error: err.message };
+    }
+  }
+
+  // Pushes state.applications as-is, then — only once that's confirmed live
+  // on GitHub — clears the local-only record for this one change so it
+  // doesn't get merged in twice next time applications.json is fetched.
+  async function syncAndCleanup(kind, id) {
+    const result = await pushApplicationsToGithub();
+    if (result.skipped) return;
+
+    if (!result.ok) {
+      flashSyncStatus(`Saved locally — GitHub sync failed (${result.error})`);
+      return;
+    }
+
+    if (kind === "delete") {
+      saveDeletedIds(loadDeletedIds().filter((x) => x !== id));
+    } else if (isLocalId(id)) {
+      saveLocalApplications(loadLocalApplications().filter((a) => a.id !== id));
+    } else {
+      const overrides = loadOverrides();
+      if (overrides[id]) {
+        delete overrides[id];
+        saveOverrides(overrides);
+      }
+    }
+    flashSyncStatus("Saved to GitHub ✓");
+  }
+
+  function setupGithubSync() {
+    const btn = $("#github-sync-btn");
+    const refresh = () => {
+      const connected = !!getGithubToken();
+      btn.textContent = connected ? "GitHub sync: on" : "Connect GitHub sync";
+      btn.classList.toggle("is-connected", connected);
+    };
+    refresh();
+
+    btn.addEventListener("click", () => {
+      if (getGithubToken()) {
+        if (confirm("Disconnect GitHub auto-sync? New changes will only save to this browser again.")) {
+          setGithubToken("");
+          refresh();
+        }
+        return;
+      }
+      const token = prompt(
+        "Paste a GitHub personal access token scoped to this repo only, with " +
+        "Contents: Read and write permission.\n" +
+        "Create one at github.com → Settings → Developer settings → Fine-grained tokens."
+      );
+      if (token && token.trim()) {
+        setGithubToken(token.trim());
+        refresh();
+      }
+    });
+  }
+
   // Clicking a card or table row (but not a link inside it) opens it for editing.
   function attachEditOnClick(el, app) {
     el.addEventListener("click", (e) => {
@@ -445,6 +563,7 @@
       persistDelete(id);
       dialog.close();
       renderAll();
+      syncAndCleanup("delete", id);
     });
 
     form.addEventListener("submit", (e) => {
@@ -468,6 +587,7 @@
         coverLetterLink: (fd.get("coverLetterLink") || "").toString().trim(),
       };
 
+      const kind = state.editingId ? "edit" : "new";
       if (state.editingId) {
         state.applications = state.applications.map((a) => (a.id === app.id ? app : a));
         persistEdit(app);
@@ -478,6 +598,7 @@
 
       dialog.close();
       renderAll();
+      syncAndCleanup(kind, app.id);
     });
   }
 
@@ -510,6 +631,7 @@
   async function init() {
     setupControls();
     setupAddForm();
+    setupGithubSync();
 
     let remote = [];
     try {

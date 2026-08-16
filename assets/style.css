@@ -125,6 +125,24 @@ body {
 }
 .add-btn:hover { opacity: 0.9; }
 
+.github-sync-btn {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.github-sync-btn:hover { color: var(--text-primary); }
+.github-sync-btn.is-connected { color: var(--status-good); border-color: var(--status-good); }
+.sync-status {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
 .theme-toggle {
   display: flex;
   align-items: center;

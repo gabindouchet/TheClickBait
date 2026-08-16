@@ -86,7 +86,23 @@ The live site updates automatically within a minute. You can also edit
   `data/applications.json` — they only show up for you, on that
   device/browser. To make a change permanent (visible to everyone, and
   versioned in git), copy its fields into `data/applications.json` by hand
-  and commit.
+  and commit — **or** connect GitHub auto-sync (next point) so this happens
+  automatically.
+- **GitHub auto-sync** — click **Connect GitHub sync** in the header to make
+  every add/edit/delete commit straight to `data/applications.json` on
+  GitHub, no manual git step needed. It asks for a **personal access token**:
+  1. On github.com: **Settings → Developer settings → Personal access tokens
+     → Fine-grained tokens → Generate new token**.
+  2. Under **Repository access**, choose **Only select repositories** →
+     `TheClickBait`. This limits what the token can touch to just this repo.
+  3. Under **Permissions → Repository permissions**, set **Contents** to
+     **Read and write**. Leave everything else at "No access".
+  4. Generate the token and paste it into the prompt on the site.
+
+  The token is saved only in that browser's `localStorage` and is sent only
+  to `api.github.com`. Scoping it to this one repo means that even if it
+  ever leaked, it couldn't touch your other repositories or account
+  settings. Click **GitHub sync: on** any time to disconnect and remove it.
 - Dark mode follows your OS setting automatically, or use the toggle in the
   top-right corner (remembered per-browser).
 - Everything is plain HTML/CSS/JS — no dependencies to install, no build
