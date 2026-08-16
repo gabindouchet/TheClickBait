@@ -481,6 +481,31 @@
     });
   }
 
+  // ---- Send-from-browser bookmarklet --------------------------------------
+  // The bookmarklet (see README) opens this site with ?link=<job url> and
+  // &title=<page title> for the job posting the person was already looking
+  // at. No fetch needed — the title came straight from their browser — so
+  // this just reuses the same title-guessing heuristic as the paste-a-link
+  // autofill and opens the form pre-filled for review.
+  function openFromQueryParams() {
+    const params = new URLSearchParams(location.search);
+    const link = params.get("link");
+    if (!link) return;
+    history.replaceState({}, "", location.pathname);
+
+    openDialog(null);
+    const form = $("#add-form");
+    form.link.value = link;
+
+    const title = params.get("title");
+    if (title) {
+      const { role, company } = guessFromTitle(title);
+      if (role) form.role.value = role;
+      if (company) form.company.value = company;
+      $("#autofill-status").textContent = "Filled from the page title — double-check company/role before saving.";
+    }
+  }
+
   // ---- Boot ------------------------------------------------------------
   async function init() {
     setupControls();
@@ -501,6 +526,7 @@
     const base = [...remote, ...loadLocalApplications()].filter((a) => !deletedIds.includes(a.id));
     state.applications = base.map((a) => overrides[a.id] || a);
     renderAll();
+    openFromQueryParams();
   }
 
   document.addEventListener("DOMContentLoaded", init);

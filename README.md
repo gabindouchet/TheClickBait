@@ -43,79 +43,20 @@ Any field can be left as an empty string `""` if you don't have that info yet.
 To add a new application, copy an existing entry inside the `[ ... ]` array,
 give it a unique `id`, and fill in the fields. Save the file — that's it.
 
-## Option A — Start here if you're new to GitHub (no command line, no git)
+## Updating the live site
 
-Everything below happens in your browser on github.com. No installs.
+The repo is already connected to GitHub Pages at
+`https://gabindouchet.github.io/TheClickBait/`. To publish a change:
 
-1. **Create a GitHub account** at [github.com/signup](https://github.com/signup)
-   — it's free.
-2. **Create a new repository**: click the **+** in the top-right corner →
-   **New repository**. Name it something like `the-click-bait`.
-   Leave it **Public** (required for free GitHub Pages) and don't check any
-   of the "initialize with…" boxes. Click **Create repository**.
-3. **Unzip** the file I sent you on your computer, so you have a plain
-   `the-click-bait` folder with `index.html`, `assets/`, `data/`,
-   etc. inside it.
-4. **Upload the files**: on your new (empty) repo's page, click
-   **"uploading an existing file"** (or **Add file → Upload files**). Open
-   the unzipped folder on your computer, select *everything inside it*
-   (`index.html`, the `assets` folder, the `data` folder, `README.md`,
-   `.gitignore` — all of it), and drag them into the browser window. Scroll
-   down, add a message like "Initial dashboard", click **Commit changes**.
-5. **Turn on GitHub Pages**: go to your repo's **Settings** tab → **Pages**
-   (left sidebar). Under "Build and deployment", set **Branch** to `main`
-   and folder to `/ (root)`, then **Save**.
-6. GitHub shows you a live URL like
-   `https://<your-username>.github.io/the-click-bait/` — give it
-   a minute or two after your first upload, then open it.
+```bash
+git add -A
+git commit -m "Describe the change"
+git push
+```
 
-**To update your applications later**, no re-upload needed: in your repo,
-click into the `data` folder → click `applications.json` → click the pencil
-(✏️) icon to edit → make your changes right there in the browser → scroll
-down → **Commit changes**. The live site updates automatically within a
-minute.
-
-## Option B — Using VS Code and git (once you're comfortable)
-
-This is faster once you know it, but it's optional — Option A does
-everything you need.
-
-1. **Open the project folder** in VS Code: `File → Open Folder…`
-2. Install the **Live Server** extension (by Ritwick Dey) from the Extensions
-   panel — this lets you preview the site with a real local server, which the
-   site needs (opening `index.html` directly with double-click will show a
-   blank dashboard because browsers block `fetch()` on `file://` URLs).
-3. Right-click `index.html` in the file explorer → **Open with Live Server**.
-   The site opens in your browser and reloads automatically whenever you save
-   a file — including `data/applications.json`.
-
-   No Live Server? You can also run a plain local server from VS Code's
-   built-in terminal (`` Ctrl+` ``/`` Cmd+` ``):
-   ```bash
-   python3 -m http.server 8000
-   ```
-   then open `http://localhost:8000` in your browser.
-4. **Create a new repository** on GitHub (e.g. `the-click-bait`).
-   Don't initialize it with a README — you already have one.
-5. In VS Code's terminal, from this project folder:
-   ```bash
-   git init
-   git add .
-   git commit -m "Initial dashboard"
-   git branch -M main
-   git remote add origin https://github.com/<your-username>/<your-repo>.git
-   git push -u origin main
-   ```
-   (VS Code's built-in **Source Control** panel can do all of this through
-   the UI too, if you prefer clicking over typing.)
-6. Turn on GitHub Pages the same way as step 5 in Option A.
-7. To update later:
-   ```bash
-   # edit data/applications.json in VS Code, then:
-   git add data/applications.json
-   git commit -m "Add application: <company>"
-   git push
-   ```
+The live site updates automatically within a minute. You can also edit
+`data/applications.json` directly on github.com (open the file → pencil icon
+→ commit) if you'd rather not use the terminal.
 
 ## Notes
 
@@ -128,6 +69,19 @@ everything you need.
 - **Click any card or table row** to reopen that same form pre-filled, so you
   can update its status, dates, or cover letter link — or click **Delete** in
   that panel to remove the entry (with a confirmation first).
+- **"Add to Click Bait" bookmarklet** — a one-click way to send a job posting
+  you're currently viewing (Indeed, Welcome to the Jungle, JobTeaser, …)
+  straight into the Add form, without copy-pasting the link yourself. Set it
+  up once:
+  1. In Safari: **View → Show Favorites Bar**.
+  2. Bookmark any page (⌘D), name it "Add to Click Bait", save it to Favorites.
+  3. Right-click that new bookmark → **Edit Address** → replace the URL with:
+     ```
+     javascript:(function(){window.open('https://gabindouchet.github.io/TheClickBait/?link='+encodeURIComponent(location.href)+'&title='+encodeURIComponent(document.title),'_blank');})();
+     ```
+  4. Now, while looking at a job posting, click that bookmark. It opens The
+     Click Bait in a new tab with the link and a role/company guess (from the
+     page's title, no fetch needed) already filled in — review and save.
 - Additions and edits are saved to that browser's `localStorage`, not to
   `data/applications.json` — they only show up for you, on that
   device/browser. To make a change permanent (visible to everyone, and
