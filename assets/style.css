@@ -219,6 +219,13 @@ body {
 .btn--secondary:hover { color: var(--text-primary); }
 .btn--primary { background: var(--series-1); border-color: var(--series-1); color: #ffffff; }
 .btn--primary:hover { opacity: 0.9; }
+.btn--danger {
+  background: transparent;
+  color: var(--status-critical);
+  border-color: var(--status-critical);
+  margin-right: auto;
+}
+.btn--danger:hover { background: var(--status-critical); color: #ffffff; }
 
 /* Stat tiles ---------------------------------------------------------- */
 .stats {

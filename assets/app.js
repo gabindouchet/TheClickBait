@@ -271,6 +271,7 @@
   // keyed by id, and overlaid on top of the JSON data at load time.
   const LOCAL_APPS_KEY = "the-click-bait-local-applications";
   const OVERRIDES_KEY = "the-click-bait-overrides";
+  const DELETED_KEY = "the-click-bait-deleted";
 
   const isLocalId = (id) => typeof id === "string" && id.startsWith("local-");
 
@@ -298,6 +299,18 @@
     localStorage.setItem(OVERRIDES_KEY, JSON.stringify(overrides));
   }
 
+  function loadDeletedIds() {
+    try {
+      const raw = localStorage.getItem(DELETED_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  }
+  function saveDeletedIds(ids) {
+    localStorage.setItem(DELETED_KEY, JSON.stringify(ids));
+  }
+
   function persistNew(app) {
     const localApps = loadLocalApplications();
     localApps.push(app);
@@ -311,6 +324,22 @@
       const overrides = loadOverrides();
       overrides[app.id] = app;
       saveOverrides(overrides);
+    }
+  }
+  function persistDelete(id) {
+    if (isLocalId(id)) {
+      saveLocalApplications(loadLocalApplications().filter((a) => a.id !== id));
+      return;
+    }
+    const overrides = loadOverrides();
+    if (overrides[id]) {
+      delete overrides[id];
+      saveOverrides(overrides);
+    }
+    const deleted = loadDeletedIds();
+    if (!deleted.includes(id)) {
+      deleted.push(id);
+      saveDeletedIds(deleted);
     }
   }
 
@@ -332,6 +361,7 @@
     state.editingId = app ? app.id : null;
     $("#add-dialog-title").textContent = app ? "Edit application" : "Add application";
     $("#add-submit").textContent = app ? "Save changes" : "Add application";
+    $("#add-delete").classList.toggle("is-hidden", !app);
 
     if (app) {
       form.company.value = app.company || "";
@@ -405,6 +435,18 @@
     $("#add-cancel").addEventListener("click", () => dialog.close());
     setupAutofill();
 
+    $("#add-delete").addEventListener("click", () => {
+      if (!state.editingId) return;
+      const id = state.editingId;
+      const app = state.applications.find((a) => a.id === id);
+      const label = app ? [app.company, app.role].filter(Boolean).join(" — ") : "this application";
+      if (!confirm(`Delete "${label}"? This can't be undone.`)) return;
+      state.applications = state.applications.filter((a) => a.id !== id);
+      persistDelete(id);
+      dialog.close();
+      renderAll();
+    });
+
     form.addEventListener("submit", (e) => {
       e.preventDefault();
       const fd = new FormData(form);
@@ -455,7 +497,8 @@
       el.innerHTML = `<p class="empty-state">Could not load data/applications.json. If you opened this file directly (file://), run a local server instead — see README.md.</p>`;
     }
     const overrides = loadOverrides();
-    const base = [...remote, ...loadLocalApplications()];
+    const deletedIds = loadDeletedIds();
+    const base = [...remote, ...loadLocalApplications()].filter((a) => !deletedIds.includes(a.id));
     state.applications = base.map((a) => overrides[a.id] || a);
     renderAll();
   }

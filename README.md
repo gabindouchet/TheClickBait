@@ -126,7 +126,8 @@ everything you need.
   best-effort and won't work for every site; always double-check the filled
   fields, or just fill the form in by hand.
 - **Click any card or table row** to reopen that same form pre-filled, so you
-  can update its status, dates, or cover letter link.
+  can update its status, dates, or cover letter link — or click **Delete** in
+  that panel to remove the entry (with a confirmation first).
 - Additions and edits are saved to that browser's `localStorage`, not to
   `data/applications.json` — they only show up for you, on that
   device/browser. To make a change permanent (visible to everyone, and
